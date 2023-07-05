@@ -277,7 +277,7 @@ def process_and_upload_files(credentials, spreadsheet, local_file_path):
 
     csv_file = local_file_path[:-3]
 
-    chunksize = 300000
+    chunksize = 200000
     header = None
 
     print("Loading chunk into Google Sheets...")
