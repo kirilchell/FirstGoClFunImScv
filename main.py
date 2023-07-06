@@ -20,7 +20,7 @@ import gc as garbage_collector
 import chardet
 
 
-num_files = 5
+num_files = 6
 
 
 # Set up logging
