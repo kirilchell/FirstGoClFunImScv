@@ -12,81 +12,11 @@ from googleapiclient.discovery import build
 from googleapiclient.http import MediaFileUpload
 from google.cloud import storage
 from flask import escape
-import gspread
-from google.auth.transport.requests import Request
-import datetime
-from googleapiclient.errors import HttpError
-import gc as garbage_collector
-import chardet
-
-
-num_files = 6
-
-
-# Set up logging
-logging.basicConfig(level=logging.INFO)
-
-
-drive_disk = 'https://drive.google.com/drive/folders/1vTrm1w6YsGbMv4AVLr-GdYdGdbGHooCw'
-parent_folder_id = '1vTrm1w6YsGbMv4AVLr-GdYdGdbGHooCw'  # id папки в Google Drive
-
 
 # Установка переменных окружения
 os.environ['ONLINER_EMAIL'] = 'Watchshop'
 os.environ['ONLINER_PASSWORD'] = 'O2203833'
 filename = 'b2bonlinerAerae'
-
-def main(event, context):
-    email = os.getenv('ONLINER_EMAIL')
-    password = os.getenv('ONLINER_PASSWORD')
-
-    url_onliner_file = 'https://b2b.onliner.by/catalog_prices'
-    timestamp = time.strftime('%Y%m%d-%H%M%S')
-    data_file_path = f'{filename}.csv.gz'
-    session = requests.Session()
-
-    try:
-        authenticate(session, password, email)
-        download_file(session, url_onliner_file, data_file_path)
-
-        credentials = get_credentials()
-
-        parent_id = "1vTrm1w6YsGbMv4AVLr-GdYdGdbGHooCw"
-        upload_to_drive(data_file_path, parent_id, credentials, filename)
-        
-        spreadsheet = search_file_create(filename, credentials, parent_folder_id, num_files)
-        process_and_upload_files(credentials, spreadsheet, data_file_path) # перемещено перед удалением файла
-
-        if os.path.isfile(data_file_path):
-            os.remove(data_file_path)
-        else:
-            return 'Ошибка: %s файл не найден' % escape(data_file_path)
-    except requests.RequestException as e:
-        return 'Ошибка при выполнении запроса: %s.' % escape(e)
-
-    except IOError as e:
-        return 'Ошибка при записи файла: %s.' % escape(e)
-
-    except Exception as e:
-        return 'Произошла непредвиденная ошибка: %s.' % escape(e)
-
-    return 'Файл успешно загружен.'
-
-
-def resilient_request_execute(request, max_retries=5, sleep_time=5):
-    for attempt in range(max_retries):
-        try:
-            return request.execute()
-        except HttpError as e:
-            if e.resp.status != 500:
-                # If the error is not an internal server error, raise it.
-                raise e
-            else:
-                print(f"Internal Server Error, retrying... (Attempt {attempt + 1})")
-                time.sleep(sleep_time)
-    # If all the retries failed, raise an exception.
-    raise Exception("All retries failed.")
-
 
 def get_credentials():
     # Создайте клиент Cloud Storage.
@@ -94,7 +24,7 @@ def get_credentials():
 
     # Получите объект Blob для файла ключа сервисного аккаунта.
     bucket = storage_client.get_bucket('ia_sam')
-    blob = bucket.blob('inner-nuance-389811-05efdb1df532.json')
+    blob = bucket.blob('inner-nuance-389811-03fcc49bfb3f.json')
 
     # Скачайте JSON файл ключа сервисного аккаунта.
     key_json_string = blob.download_as_text()
@@ -103,10 +33,7 @@ def get_credentials():
     key_dict = json.loads(key_json_string)
 
     # Создайте учетные данные из ключа сервисного аккаунта.
-    SCOPES = ['https://www.googleapis.com/auth/spreadsheets',
-              'https://www.googleapis.com/auth/drive.file']
-    credentials = service_account.Credentials.from_service_account_info(
-        key_dict, scopes=SCOPES)
+    credentials = service_account.Credentials.from_service_account_info(key_dict)
 
     return credentials
 
@@ -137,7 +64,7 @@ def download_file(session, url, local_filename):
 
 
 
-def upload_to_drive(local_file, parent_id, credentials, filename):
+def upload_to_drive(local_file, parent_id, credentials):
     drive_service = build('drive', 'v3', credentials=credentials)
     
     # Search for the file in the drive folder
@@ -152,7 +79,7 @@ def upload_to_drive(local_file, parent_id, credentials, filename):
                 fileId=file['id'],
                 media_body=media,
             )
-            resilient_request_execute(request)
+            request.execute()
             return
 
     # If file not found, then create new file and upload
@@ -166,184 +93,152 @@ def upload_to_drive(local_file, parent_id, credentials, filename):
                             resumable=True)
     request = drive_service.files().create(body=file_metadata,
                                            media_body=media)
-    resilient_request_execute(request)
+    request.execute()
 
+def process_and_upload_files(credentials, parent_id, local_file_path):
+    import pandas as pd
+    import os
+    from googleapiclient.http import MediaFileUpload
+    from googleapiclient.discovery import build
 
+    drive_service = build('drive', 'v3', credentials=credentials)
 
-def search_file_create(filename, credentials, parent_folder_id, num_files):
-    
-
-    gc = gspread.authorize(credentials)
-    files = gc.list_spreadsheet_files()
-
-    # Создание списка файлов и их имен
-    file_names = [f"{filename}_{i}" for i in range(num_files)]
-    file_objects = []
-
-    # Создание или открытие файлов
-    for name in file_names:
-        file_exists = any(file['name'] == name for file in files)
-        if not file_exists:
-            file_objects.append(gc.create(name))
-        else:
-            file_objects.append(gc.open(name))
-
-    # Перемещение файлов в требуемую папку
-    service = build('drive', 'v3', credentials=credentials)
-    for file in file_objects:
-        file_id = file.id
-        file_info = service.files().get(fileId=file_id, fields='parents').execute()
-        current_parents = set(file_info.get('parents', []))
-        if parent_folder_id not in current_parents:
-            previous_parents = ",".join(current_parents)
-            service.files().update(
-                fileId=file_id,
-                addParents=parent_folder_id,
-                removeParents=previous_parents,
-                fields='id, parents').execute()
-
-    # Получение последнего измененного файла
-    last_modified_file = min(
-        file_objects,
-        key=lambda file: datetime.datetime.fromisoformat(
-            service.files().get(fileId=file.id, fields='modifiedTime')
-            .execute()['modifiedTime'].rstrip('Z')
-        )
-    )
-
-    # Ваш код для работы с последним измененным файлом
-    try:
-        # Create a new sheet, delete others, and rename the new one
-        new_sheet = last_modified_file.add_worksheet(title=None, rows="1", cols="9")
-
-        # Get worksheets in the spreadsheet and delete all except the newly created one
-        sheets = last_modified_file.worksheets()
-        for sheet in sheets:
-            if sheet.id != new_sheet.id:
-                last_modified_file.del_worksheet(sheet)
-
-        # Rename the newly created sheet to 'transit'
-        new_sheet.update_title("transit")
-
-        # Resize the new sheet
-        new_sheet.resize(rows=700000, cols=9)
-    except Exception as e:
-        print(f"Error while manipulating worksheets: {e}")
-        return
-
-    return last_modified_file
-
-
-def detect_encoding(file_path, num_bytes=10000):
-    with open(file_path, 'rb') as f:
-        rawdata = f.read(num_bytes)
-    result = chardet.detect(rawdata)
-    return result['encoding']
-
-def append_data(df, worksheet):
-    # Разделите df на подчанки размером 40000 строк
-    chunks = [df[i:i + 40000] for i in range(0, df.shape[0], 40000)]
-    
-    for chunk in chunks:
-        try:
-            chunk_str = chunk.astype(str)
-            chunk_list = chunk_str.values.tolist()
-            worksheet.append_rows(chunk_list)
-        except Exception as e:
-            print(f"Error appending data to spreadsheet: {e}")
-            return
-
-def process_and_upload_files(credentials, spreadsheet, local_file_path):
-
-    def reauthorize(credentials):
-        print("Reauthorizing credentials...")
-        gc = gspread.authorize(credentials)
-        print("Credentials reauthorized.")
-        return gc.open_by_key(spreadsheet_id)  # Возвращаем новый объект Spreadsheet
-
-    print("Authorizing credentials...")
-    gc = gspread.authorize(credentials)
-    print("Credentials authorized.")
-
-    spreadsheet_id = spreadsheet.id  # сохраняем id таблицы для повторной авторизации
-
-    print("Unzipping file...")
+    # Распаковываем gzip-файл
     try:
         os.system('gunzip -c ' + local_file_path + ' > ' + local_file_path[:-3])
     except Exception as e:
         print("Error unzipping file:", e)
-        return
-    print("File unzipped.")
 
+    # Убираем расширение .gz у файла
     csv_file = local_file_path[:-3]
 
-    chunksize = 200000
+    chunksize = 10000  # размер чанка
+    upload_chunk_size = 10  # количество чанков перед загрузкой на Google Drive
     header = None
+    temp_csv_files = []  # список для хранения имен временных CSV файлов
+    file_identifier = 'aszoijodijsoQE'  # идентификатор для имени файла
 
-    print("Loading chunk into Google Sheets...")
+    upload_counter = 0  # счетчик для определения момента загрузки
+
     try:
-        print("Reading and processing CSV file...")
-        encoding = detect_encoding(csv_file)
-        print(f"Detected encoding: {encoding}")  # вывод кодировки в логи
-        for chunk_id, chunk in enumerate(pd.read_csv(csv_file, encoding=encoding, sep=';', chunksize=chunksize, dtype=str)):
-            print(f'Processing chunk number: {chunk_id}')
+        # Итерация по чанкам файла
+        for chunk_id, chunk in enumerate(pd.read_csv(csv_file, encoding='CP1251', sep=';', chunksize=chunksize)):
+
+            print(f'Processing chunk number: {chunk_id}')  # Выводим в лог номер чанка
 
             # Обрабатываем заголовок
             if header is None:
-                print("Processing header...")
                 header = chunk.columns.values[:8].tolist() + ['Инфо Магазин']
 
             # Объединяем все столбцы после восьмого и пропускаем пустые ячейки
-            print("Processing chunk data...")
-            chunk['Инфо Магазин'] = chunk.iloc[:, 8:].apply(lambda row: '_'.join(row.dropna().astype(str)), axis=1)
-
-            # Выбор столбцов
-            print("Before selecting columns...")
-            chunk = chunk[header]
-            print("After selecting columns...")
-
-            # Преобразуем все данные в строковый формат
-            print("Converting data to string format...")
-            chunk = chunk.astype(str)
-            print("Data converted.")
-
-            print("Appending data to spreadsheet...")
-            worksheet = spreadsheet.worksheet("transit")
-            try:
-                append_data(chunk, worksheet)
-            except Exception as e:
-                print("Error appending data to spreadsheet:", e)
-                return
-            print("Data appended.")
-
-            # удаляем чанк
-            del chunk
-            # принудительный вызов сборщика мусора
-            garbage_collector.collect()
-
-            # Если номер чанка кратен 5, выполняем паузу и повторную авторизацию
-            if (chunk_id + 1) % 5 == 0:
-                print("Pause for 60 seconds...")
-                spreadsheet = reauthorize(credentials)
-
-        # Переименовываем лист после обработки всех чанков
-        print("Renaming sheet to 'ready'...")
-        try:
-            worksheet.update_title('ready')
-        except Exception as e:
-            print("Error renaming sheet:", e)
+            chunk['Инфо Магазин'] = chunk.iloc[:, 8:].apply(
+                lambda row: '_'.join(row.dropna().astype(str)), axis=1)
+            chunk = chunk[header]  # только 9 первых столбцов с новым столбцом
+            
+            # Записываем чанк во временный CSV файл
+            chunk_file = f'{chunk_id}.csv'
+            chunk.to_csv(chunk_file, sep=',', index=False)
+            temp_csv_files.append(chunk_file)
+            upload_counter += 1
+            
+            end_of_file = chunk.shape[0] < chunksize  # Проверяем, достигли ли мы конца файла
+            
+            # Если количество обработанных чанков достигло upload_chunk_size или это последний чанк
+            if upload_counter >= upload_chunk_size or end_of_file:
+                try:
+                    # Объединяем все временные CSV файлы
+                    combined_file = f'{file_identifier}_{chunk_id//upload_chunk_size:03d}.csv'
+                    with open(combined_file, 'w') as outfile:
+                        for fname in temp_csv_files:
+                            with open(fname) as infile:
+                                for line in infile:
+                                    outfile.write(line)
+                                    
+                    # Загружаем объединенный файл на Google Drive
+                    # Проверяем, существует ли файл с таким именем на Google Drive
+                    results = drive_service.files().list(q=f"name='{combined_file}' and '{parent_id}' in parents",
+                                                        fields="files(id)").execute()
+                    items = results.get('files', [])
+                    
+                    # Если файл существует, обновляем его
+                    if items:
+                        file_id = items[0]['id']
+                        media = MediaFileUpload(combined_file, mimetype='text/csv', resumable=True)
+                        request = drive_service.files().update(fileId=file_id, media_body=media).execute()
+                    # Иначе создаем новый файл
+                    else:
+                        file_metadata = {
+                            'name': combined_file,
+                            'parents': [parent_id]
+                        }
+                        media = MediaFileUpload(combined_file, mimetype='text/csv')
+                        request = drive_service.files().create(body=file_metadata, media_body=media, fields='id').execute()
+                    
+                    print('File ID:', request.get('id'))
+                    
+                    # Удаляем временные файлы
+                    for f in temp_csv_files:
+                        os.remove(f)
+                    os.remove(combined_file)
+                    
+                    # Сбрасываем счетчик и очищаем список имен временных файлов
+                    upload_counter = 0
+                    temp_csv_files = []
+                    
+                except Exception as e:
+                    print("Error processing and uploading chunk:", e)
 
     except Exception as e:
         print("Error reading CSV file:", e)
 
-    print("Done processing and uploading files.")
     return None
 
 
 
+def main(event, context):
+    import base64
+    print("""This Function was triggered by messageId {} published at {} to {}
+    """.format(context.event_id, context.timestamp, context.resource["name"]))
 
+    if 'data' in event:
+        message = base64.b64decode(event['data']).decode('utf-8')
+        print("Message Data: {}".format(message))
+    else:
+        print("No data!")
 
+    if message == 'ne_onliner_file_generat':
+        email = os.getenv('ONLINER_EMAIL')
+        password = os.getenv('ONLINER_PASSWORD')
 
+        url_onliner_file = 'https://b2b.onliner.by/catalog_prices'
+        timestamp = time.strftime('%Y%m%d-%H%M%S')
+        data_file_path = f'{filename}.csv.gz'
+        session = requests.Session()
 
+        try:
+            authenticate(session, password, email)
+            download_file(session, url_onliner_file, data_file_path)
+
+            credentials = get_credentials()
+
+            parent_id = "1vTrm1w6YsGbMv4AVLr-GdYdGdbGHooCw"
+            upload_to_drive(data_file_path, parent_id, credentials)
+
+            process_and_upload_files(credentials, parent_id, data_file_path) # перемещено перед удалением файла
+
+            if os.path.isfile(data_file_path):
+                os.remove(data_file_path)
+            else:
+                return 'Ошибка: %s файл не найден' % escape(data_file_path)
+        except requests.RequestException as e:
+            return 'Ошибка при выполнении запроса: %s.' % escape(e)
+
+        except IOError as e:
+            return 'Ошибка при записи файла: %s.' % escape(e)
+
+        except Exception as e:
+            return 'Произошла непредвиденная ошибка: %s.' % escape(e)
+
+        return 'Файл успешно загружен.'
 
 

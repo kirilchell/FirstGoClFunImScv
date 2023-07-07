@@ -9,5 +9,3 @@ numpy
 requests
 flask
 gdown
-gspread
-chardet
