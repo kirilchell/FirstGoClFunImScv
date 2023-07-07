@@ -342,20 +342,22 @@ def process_and_upload_files(credentials, spreadsheet, local_file_path):
 
 
 
-def process_files(credentials, spreadsheet, local_file_path):
-    print("Authorizing credentials...")
-    gc = gspread.authorize(credentials)
-    print("Credentials authorized.")
-
-    spreadsheet_id = spreadsheet.id  # сохраняем id таблицы для повторной авторизации
+def process_files(credentials, local_file_path):
+    try:
+        print("Authorizing credentials...")
+        gc = gspread.authorize(credentials)
+        print("Credentials authorized.")
+    except Exception as e:
+        print("Error authorizing credentials:", e)
+        return
 
     print("Unzipping file...")
     try:
         os.system('gunzip -c ' + local_file_path + ' > ' + local_file_path[:-3])
+        print("File unzipped.")
     except Exception as e:
         print("Error unzipping file:", e)
         return
-    print("File unzipped.")
 
     csv_file = local_file_path[:-3]
 
@@ -363,34 +365,41 @@ def process_files(credentials, spreadsheet, local_file_path):
     header = None
 
     print("Reading and processing CSV file...")
-    encoding = detect_encoding(csv_file)
-    print(f"Detected encoding: {encoding}")  # вывод кодировки в логи
-    chunks = []
-    for chunk_id, chunk in enumerate(pd.read_csv(csv_file, encoding=encoding, sep=';', chunksize=chunksize, dtype=str)):
-        print(f'Processing chunk number: {chunk_id}')
+    try:
+        encoding = detect_encoding(csv_file)
+        print(f"Detected encoding: {encoding}")
+        for chunk_id, chunk in enumerate(pd.read_csv(csv_file, encoding=encoding, sep=';', chunksize=chunksize, dtype=str)):
+            print(f'Processing chunk number: {chunk_id}')
 
-        # Обрабатываем заголовок
-        if header is None:
-            print("Processing header...")
-            header = chunk.columns.values[:8].tolist() + ['Инфо Магазин']
+            if header is None:
+                print("Processing header...")
+                header = chunk.columns.values[:8].tolist() + ['Инфо Магазин']
 
-        # Объединяем все столбцы после восьмого и пропускаем пустые ячейки
-        print("Processing chunk data...")
-        chunk['Инфо Магазин'] = chunk.iloc[:, 8:].apply(lambda row: '_'.join(row.dropna().astype(str)), axis=1)
+            print("Processing chunk data...")
+            chunk['Инфо Магазин'] = chunk.iloc[:, 8:].apply(lambda row: '_'.join(row.dropna().astype(str)), axis=1)
 
-        # Выбор столбцов
-        print("Before selecting columns...")
-        chunk = chunk[header]
-        print("After selecting columns...")
+            print("Before selecting columns...")
+            chunk = chunk[header]
+            print("After selecting columns...")
 
-        # Преобразуем все данные в строковый формат
-        print("Converting data to string format...")
-        chunk = chunk.astype(str)
-        print("Data converted.")
-        chunks.append(chunk)
+            print("Converting data to string format...")
+            chunk = chunk.astype(str)
+            print("Data converted.")
+
+            # удаляем чанк
+            del chunk
+            # принудительный вызов сборщика мусора
+            garbage_collector.collect()
+
+            # Если номер чанка кратен 5, выполняем паузу
+            if (chunk_id + 1) % 5 == 0:
+                print("Pause for 60 seconds...")
+
+    except Exception as e:
+        print("Error reading or processing CSV file:", e)
 
     print("Done processing files.")
-    return chunks
+    return None
 
 def upload_to_gsheets(credentials, spreadsheet, chunks):
     print("Authorizing credentials...")
