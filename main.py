@@ -55,7 +55,7 @@ def main(event, context):
         upload_to_drive(data_file_path, parent_id, credentials, filename)
         
         spreadsheet = search_file_create(filename, credentials, parent_folder_id, num_files)
-        chunks = process_files(credentials, spreadsheet, local_file_path)
+        chunks = process_files(credentials, local_file_path)
         upload_to_gsheets(credentials, spreadsheet, chunks)
 
         if os.path.isfile(data_file_path):
