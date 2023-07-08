@@ -301,6 +301,8 @@ def process_files(local_file_path):
             chunk = chunk.astype(str)
             print("Data converted.")
 
+            
+
             chunks.append(chunk)
 
     print("Done processing files.")
