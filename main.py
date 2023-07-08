@@ -54,8 +54,9 @@ def main(event, context):
         parent_id = "1vTrm1w6YsGbMv4AVLr-GdYdGdbGHooCw"
         upload_to_drive(data_file_path, parent_id, credentials, filename)
         
-        spreadsheet = search_file_create(filename, credentials, parent_folder_id, num_files)
         process_files(data_file_path) # перемещено перед удалением файла
+
+        spreadsheet = search_file_create(filename, credentials, parent_folder_id, num_files)
 
         if os.path.isfile(data_file_path):
             os.remove(data_file_path)
