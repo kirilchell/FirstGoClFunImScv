@@ -28,10 +28,10 @@ logging.basicConfig(level=logging.INFO)
 
 
 drive_disk = 'https://drive.google.com/drive/folders/1vTrm1w6YsGbMv4AVLr-GdYdGdbGHooCw'
-parent_folder_id = '1vTrm1w6YsGbMv4AVLr-GdYdGdbGHooCw'  # id папки в Google Drive
+parent_folder_id = '1vTrm1w6YsGbMv4AVLr-GdYdGdbGHooCw'  # id РїР°РїРєРё РІ Google Drive
 
 
-# Установка переменных окружения
+# РЈСЃС‚Р°РЅРѕРІРєР° РїРµСЂРµРјРµРЅРЅС‹С… РѕРєСЂСѓР¶РµРЅРёСЏ
 os.environ['ONLINER_EMAIL'] = 'Watchshop'
 os.environ['ONLINER_PASSWORD'] = 'O2203833'
 filename = 'b2bonlinerAerae'
@@ -55,23 +55,23 @@ def main(event, context):
         upload_to_drive(data_file_path, parent_id, credentials, filename)
         
         spreadsheet = search_file_create(filename, credentials, parent_folder_id, num_files)
-        chunks = process_files(credentials, local_file_path)
-        upload_to_gsheets(credentials, spreadsheet, chunks)
+        chunks = process_files(credentials, spreadsheet, local_file_path)
+upload_to_gsheets(credentials, spreadsheet, chunks)
 
         if os.path.isfile(data_file_path):
             os.remove(data_file_path)
         else:
-            return 'Ошибка: %s файл не найден' % escape(data_file_path)
+            return 'РћС€РёР±РєР°: %s С„Р°Р№Р» РЅРµ РЅР°Р№РґРµРЅ' % escape(data_file_path)
     except requests.RequestException as e:
-        return 'Ошибка при выполнении запроса: %s.' % escape(e)
+        return 'РћС€РёР±РєР° РїСЂРё РІС‹РїРѕР»РЅРµРЅРёРё Р·Р°РїСЂРѕСЃР°: %s.' % escape(e)
 
     except IOError as e:
-        return 'Ошибка при записи файла: %s.' % escape(e)
+        return 'РћС€РёР±РєР° РїСЂРё Р·Р°РїРёСЃРё С„Р°Р№Р»Р°: %s.' % escape(e)
 
     except Exception as e:
-        return 'Произошла непредвиденная ошибка: %s.' % escape(e)
+        return 'РџСЂРѕРёР·РѕС€Р»Р° РЅРµРїСЂРµРґРІРёРґРµРЅРЅР°СЏ РѕС€РёР±РєР°: %s.' % escape(e)
 
-    return 'Файл успешно загружен.'
+    return 'Р¤Р°Р№Р» СѓСЃРїРµС€РЅРѕ Р·Р°РіСЂСѓР¶РµРЅ.'
 
 
 def resilient_request_execute(request, max_retries=5, sleep_time=5):
@@ -90,20 +90,20 @@ def resilient_request_execute(request, max_retries=5, sleep_time=5):
 
 
 def get_credentials():
-    # Создайте клиент Cloud Storage.
+    # РЎРѕР·РґР°Р№С‚Рµ РєР»РёРµРЅС‚ Cloud Storage.
     storage_client = storage.Client()
 
-    # Получите объект Blob для файла ключа сервисного аккаунта.
+    # РџРѕР»СѓС‡РёС‚Рµ РѕР±СЉРµРєС‚ Blob РґР»СЏ С„Р°Р№Р»Р° РєР»СЋС‡Р° СЃРµСЂРІРёСЃРЅРѕРіРѕ Р°РєРєР°СѓРЅС‚Р°.
     bucket = storage_client.get_bucket('ia_sam')
     blob = bucket.blob('inner-nuance-389811-05efdb1df532.json')
 
-    # Скачайте JSON файл ключа сервисного аккаунта.
+    # РЎРєР°С‡Р°Р№С‚Рµ JSON С„Р°Р№Р» РєР»СЋС‡Р° СЃРµСЂРІРёСЃРЅРѕРіРѕ Р°РєРєР°СѓРЅС‚Р°.
     key_json_string = blob.download_as_text()
 
-    # Загрузите ключ сервисного аккаунта из JSON строки.
+    # Р—Р°РіСЂСѓР·РёС‚Рµ РєР»СЋС‡ СЃРµСЂРІРёСЃРЅРѕРіРѕ Р°РєРєР°СѓРЅС‚Р° РёР· JSON СЃС‚СЂРѕРєРё.
     key_dict = json.loads(key_json_string)
 
-    # Создайте учетные данные из ключа сервисного аккаунта.
+    # РЎРѕР·РґР°Р№С‚Рµ СѓС‡РµС‚РЅС‹Рµ РґР°РЅРЅС‹Рµ РёР· РєР»СЋС‡Р° СЃРµСЂРІРёСЃРЅРѕРіРѕ Р°РєРєР°СѓРЅС‚Р°.
     SCOPES = ['https://www.googleapis.com/auth/spreadsheets',
               'https://www.googleapis.com/auth/drive.file']
     credentials = service_account.Credentials.from_service_account_info(
@@ -120,9 +120,9 @@ def authenticate(session, password, email):
     }
     response = session.post(url, data=data, headers=headers)
     if response.status_code == 200:
-        print(f'Успешное соединение c {url}.')
+        print(f'РЈСЃРїРµС€РЅРѕРµ СЃРѕРµРґРёРЅРµРЅРёРµ c {url}.')
     else:
-        print(f'Ошибка при подключении к {url}. Код статуса: {response.status_code}')
+        print(f'РћС€РёР±РєР° РїСЂРё РїРѕРґРєР»СЋС‡РµРЅРёРё Рє {url}. РљРѕРґ СЃС‚Р°С‚СѓСЃР°: {response.status_code}')
 
 def download_file(session, url, local_filename):
     r = session.get(url, stream=True)
@@ -134,7 +134,7 @@ def download_file(session, url, local_filename):
                     f.write(chunk)
         return local_filename
     else:
-        print(f'Ошибка при скачивании файла. Код статуса: {r.status_code}')
+        print(f'РћС€РёР±РєР° РїСЂРё СЃРєР°С‡РёРІР°РЅРёРё С„Р°Р№Р»Р°. РљРѕРґ СЃС‚Р°С‚СѓСЃР°: {r.status_code}')
 
 
 
@@ -177,11 +177,11 @@ def search_file_create(filename, credentials, parent_folder_id, num_files):
     gc = gspread.authorize(credentials)
     files = gc.list_spreadsheet_files()
 
-    # Создание списка файлов и их имен
+    # РЎРѕР·РґР°РЅРёРµ СЃРїРёСЃРєР° С„Р°Р№Р»РѕРІ Рё РёС… РёРјРµРЅ
     file_names = [f"{filename}_{i}" for i in range(num_files)]
     file_objects = []
 
-    # Создание или открытие файлов
+    # РЎРѕР·РґР°РЅРёРµ РёР»Рё РѕС‚РєСЂС‹С‚РёРµ С„Р°Р№Р»РѕРІ
     for name in file_names:
         file_exists = any(file['name'] == name for file in files)
         if not file_exists:
@@ -189,7 +189,7 @@ def search_file_create(filename, credentials, parent_folder_id, num_files):
         else:
             file_objects.append(gc.open(name))
 
-    # Перемещение файлов в требуемую папку
+    # РџРµСЂРµРјРµС‰РµРЅРёРµ С„Р°Р№Р»РѕРІ РІ С‚СЂРµР±СѓРµРјСѓСЋ РїР°РїРєСѓ
     service = build('drive', 'v3', credentials=credentials)
     for file in file_objects:
         file_id = file.id
@@ -203,7 +203,7 @@ def search_file_create(filename, credentials, parent_folder_id, num_files):
                 removeParents=previous_parents,
                 fields='id, parents').execute()
 
-    # Получение последнего измененного файла
+    # РџРѕР»СѓС‡РµРЅРёРµ РїРѕСЃР»РµРґРЅРµРіРѕ РёР·РјРµРЅРµРЅРЅРѕРіРѕ С„Р°Р№Р»Р°
     last_modified_file = min(
         file_objects,
         key=lambda file: datetime.datetime.fromisoformat(
@@ -212,7 +212,7 @@ def search_file_create(filename, credentials, parent_folder_id, num_files):
         )
     )
 
-    # Ваш код для работы с последним измененным файлом
+    # Р’Р°С€ РєРѕРґ РґР»СЏ СЂР°Р±РѕС‚С‹ СЃ РїРѕСЃР»РµРґРЅРёРј РёР·РјРµРЅРµРЅРЅС‹Рј С„Р°Р№Р»РѕРј
     try:
         # Create a new sheet, delete others, and rename the new one
         new_sheet = last_modified_file.add_worksheet(title=None, rows="1", cols="9")
@@ -242,7 +242,7 @@ def detect_encoding(file_path, num_bytes=10000):
     return result['encoding']
 
 def append_data(df, worksheet):
-    # Разделите df на подчанки размером 40000 строк
+    # Р Р°Р·РґРµР»РёС‚Рµ df РЅР° РїРѕРґС‡Р°РЅРєРё СЂР°Р·РјРµСЂРѕРј 40000 СЃС‚СЂРѕРє
     chunks = [df[i:i + 40000] for i in range(0, df.shape[0], 40000)]
     
     for chunk in chunks:
@@ -254,31 +254,108 @@ def append_data(df, worksheet):
             print(f"Error appending data to spreadsheet: {e}")
             return
 
+def process_and_upload_files(credentials, spreadsheet, local_file_path):
 
-def reauthorize(credentials):
+    def reauthorize(credentials):
         print("Reauthorizing credentials...")
         gc = gspread.authorize(credentials)
         print("Credentials reauthorized.")
-        return
+        return gc.open_by_key(spreadsheet_id)  # Р’РѕР·РІСЂР°С‰Р°РµРј РЅРѕРІС‹Р№ РѕР±СЉРµРєС‚ Spreadsheet
 
+    print("Authorizing credentials...")
+    gc = gspread.authorize(credentials)
+    print("Credentials authorized.")
 
-
-def process_files(credentials, local_file_path):
-    try:
-        print("Authorizing credentials...")
-        gc = gspread.authorize(credentials)
-        print("Credentials authorized.")
-    except Exception as e:
-        print("Error authorizing credentials:", e)
-        return
+    spreadsheet_id = spreadsheet.id  # СЃРѕС…СЂР°РЅСЏРµРј id С‚Р°Р±Р»РёС†С‹ РґР»СЏ РїРѕРІС‚РѕСЂРЅРѕР№ Р°РІС‚РѕСЂРёР·Р°С†РёРё
 
     print("Unzipping file...")
     try:
         os.system('gunzip -c ' + local_file_path + ' > ' + local_file_path[:-3])
-        print("File unzipped.")
     except Exception as e:
         print("Error unzipping file:", e)
         return
+    print("File unzipped.")
+
+    csv_file = local_file_path[:-3]
+
+    chunksize = 200000
+    header = None
+
+    print("Loading chunk into Google Sheets...")
+    try:
+        print("Reading and processing CSV file...")
+        encoding = detect_encoding(csv_file)
+        print(f"Detected encoding: {encoding}")  # РІС‹РІРѕРґ РєРѕРґРёСЂРѕРІРєРё РІ Р»РѕРіРё
+        for chunk_id, chunk in enumerate(pd.read_csv(csv_file, encoding=encoding, sep=';', chunksize=chunksize, dtype=str)):
+            print(f'Processing chunk number: {chunk_id}')
+
+            # РћР±СЂР°Р±Р°С‚С‹РІР°РµРј Р·Р°РіРѕР»РѕРІРѕРє
+            if header is None:
+                print("Processing header...")
+                header = chunk.columns.values[:8].tolist() + ['РРЅС„Рѕ РњР°РіР°Р·РёРЅ']
+
+            # РћР±СЉРµРґРёРЅСЏРµРј РІСЃРµ СЃС‚РѕР»Р±С†С‹ РїРѕСЃР»Рµ РІРѕСЃСЊРјРѕРіРѕ Рё РїСЂРѕРїСѓСЃРєР°РµРј РїСѓСЃС‚С‹Рµ СЏС‡РµР№РєРё
+            print("Processing chunk data...")
+            chunk['РРЅС„Рѕ РњР°РіР°Р·РёРЅ'] = chunk.iloc[:, 8:].apply(lambda row: '_'.join(row.dropna().astype(str)), axis=1)
+
+            # Р’С‹Р±РѕСЂ СЃС‚РѕР»Р±С†РѕРІ
+            print("Before selecting columns...")
+            chunk = chunk[header]
+            print("After selecting columns...")
+
+            # РџСЂРµРѕР±СЂР°Р·СѓРµРј РІСЃРµ РґР°РЅРЅС‹Рµ РІ СЃС‚СЂРѕРєРѕРІС‹Р№ С„РѕСЂРјР°С‚
+            print("Converting data to string format...")
+            chunk = chunk.astype(str)
+            print("Data converted.")
+
+            print("Appending data to spreadsheet...")
+            worksheet = spreadsheet.worksheet("transit")
+            try:
+                append_data(chunk, worksheet)
+            except Exception as e:
+                print("Error appending data to spreadsheet:", e)
+                return
+            print("Data appended.")
+
+            # СѓРґР°Р»СЏРµРј С‡Р°РЅРє
+            del chunk
+            # РїСЂРёРЅСѓРґРёС‚РµР»СЊРЅС‹Р№ РІС‹Р·РѕРІ СЃР±РѕСЂС‰РёРєР° РјСѓСЃРѕСЂР°
+            garbage_collector.collect()
+
+            # Р•СЃР»Рё РЅРѕРјРµСЂ С‡Р°РЅРєР° РєСЂР°С‚РµРЅ 5, РІС‹РїРѕР»РЅСЏРµРј РїР°СѓР·Сѓ Рё РїРѕРІС‚РѕСЂРЅСѓСЋ Р°РІС‚РѕСЂРёР·Р°С†РёСЋ
+            if (chunk_id + 1) % 5 == 0:
+                print("Pause for 60 seconds...")
+                spreadsheet = reauthorize(credentials)
+
+        # РџРµСЂРµРёРјРµРЅРѕРІС‹РІР°РµРј Р»РёСЃС‚ РїРѕСЃР»Рµ РѕР±СЂР°Р±РѕС‚РєРё РІСЃРµС… С‡Р°РЅРєРѕРІ
+        print("Renaming sheet to 'ready'...")
+        try:
+            worksheet.update_title('ready')
+        except Exception as e:
+            print("Error renaming sheet:", e)
+
+    except Exception as e:
+        print("Error reading CSV file:", e)
+
+    print("Done processing and uploading files.")
+    return None
+
+
+
+def process_files(credentials, spreadsheet, local_file_path):
+    print("Authorizing credentials...")
+    gc = gspread.authorize(credentials)
+    print("Credentials authorized.")
+
+    spreadsheet_id = spreadsheet.id  # СЃРѕС…СЂР°РЅСЏРµРј id С‚Р°Р±Р»РёС†С‹ РґР»СЏ РїРѕРІС‚РѕСЂРЅРѕР№ Р°РІС‚РѕСЂРёР·Р°С†РёРё
+
+    print("Unzipping file...")
+    try:
+        os.system('gunzip -c ' + local_file_path + ' > ' + local_file_path[:-3])
+    except Exception as e:
+        print("Error unzipping file:", e)
+        return
+    print("File unzipped.")
 
     csv_file = local_file_path[:-3]
 
@@ -286,48 +363,41 @@ def process_files(credentials, local_file_path):
     header = None
 
     print("Reading and processing CSV file...")
-    try:
-        encoding = detect_encoding(csv_file)
-        print(f"Detected encoding: {encoding}")
-        for chunk_id, chunk in enumerate(pd.read_csv(csv_file, encoding=encoding, sep=';', chunksize=chunksize, dtype=str)):
-            print(f'Processing chunk number: {chunk_id}')
+    encoding = detect_encoding(csv_file)
+    print(f"Detected encoding: {encoding}")  # РІС‹РІРѕРґ РєРѕРґРёСЂРѕРІРєРё РІ Р»РѕРіРё
+    chunks = []
+    for chunk_id, chunk in enumerate(pd.read_csv(csv_file, encoding=encoding, sep=';', chunksize=chunksize, dtype=str)):
+        print(f'Processing chunk number: {chunk_id}')
 
-            if header is None:
-                print("Processing header...")
-                header = chunk.columns.values[:8].tolist() + ['Инфо Магазин']
+        # РћР±СЂР°Р±Р°С‚С‹РІР°РµРј Р·Р°РіРѕР»РѕРІРѕРє
+        if header is None:
+            print("Processing header...")
+            header = chunk.columns.values[:8].tolist() + ['РРЅС„Рѕ РњР°РіР°Р·РёРЅ']
 
-            print("Processing chunk data...")
-            chunk['Инфо Магазин'] = chunk.iloc[:, 8:].apply(lambda row: '_'.join(row.dropna().astype(str)), axis=1)
+        # РћР±СЉРµРґРёРЅСЏРµРј РІСЃРµ СЃС‚РѕР»Р±С†С‹ РїРѕСЃР»Рµ РІРѕСЃСЊРјРѕРіРѕ Рё РїСЂРѕРїСѓСЃРєР°РµРј РїСѓСЃС‚С‹Рµ СЏС‡РµР№РєРё
+        print("Processing chunk data...")
+        chunk['РРЅС„Рѕ РњР°РіР°Р·РёРЅ'] = chunk.iloc[:, 8:].apply(lambda row: '_'.join(row.dropna().astype(str)), axis=1)
 
-            print("Before selecting columns...")
-            chunk = chunk[header]
-            print("After selecting columns...")
+        # Р’С‹Р±РѕСЂ СЃС‚РѕР»Р±С†РѕРІ
+        print("Before selecting columns...")
+        chunk = chunk[header]
+        print("After selecting columns...")
 
-            print("Converting data to string format...")
-            chunk = chunk.astype(str)
-            print("Data converted.")
-
-            # удаляем чанк
-            del chunk
-            # принудительный вызов сборщика мусора
-            garbage_collector.collect()
-
-            # Если номер чанка кратен 5, выполняем паузу
-            if (chunk_id + 1) % 5 == 0:
-                print("Pause for 60 seconds...")
-
-    except Exception as e:
-        print("Error reading or processing CSV file:", e)
+        # РџСЂРµРѕР±СЂР°Р·СѓРµРј РІСЃРµ РґР°РЅРЅС‹Рµ РІ СЃС‚СЂРѕРєРѕРІС‹Р№ С„РѕСЂРјР°С‚
+        print("Converting data to string format...")
+        chunk = chunk.astype(str)
+        print("Data converted.")
+        chunks.append(chunk)
 
     print("Done processing files.")
-    return None
+    return chunks
 
 def upload_to_gsheets(credentials, spreadsheet, chunks):
     print("Authorizing credentials...")
     gc = gspread.authorize(credentials)
     print("Credentials authorized.")
 
-    spreadsheet_id = spreadsheet.id  # сохраняем id таблицы для повторной авторизации
+    spreadsheet_id = spreadsheet.id  # СЃРѕС…СЂР°РЅСЏРµРј id С‚Р°Р±Р»РёС†С‹ РґР»СЏ РїРѕРІС‚РѕСЂРЅРѕР№ Р°РІС‚РѕСЂРёР·Р°С†РёРё
 
     print("Appending data to spreadsheet...")
     worksheet = spreadsheet.worksheet("transit")
@@ -339,7 +409,7 @@ def upload_to_gsheets(credentials, spreadsheet, chunks):
         return
     print("Data appended.")
 
-    # Переименовываем лист после обработки всех чанков
+    # РџРµСЂРµРёРјРµРЅРѕРІС‹РІР°РµРј Р»РёСЃС‚ РїРѕСЃР»Рµ РѕР±СЂР°Р±РѕС‚РєРё РІСЃРµС… С‡Р°РЅРєРѕРІ
     print("Renaming sheet to 'ready'...")
     try:
         worksheet.update_title('ready')
@@ -348,7 +418,6 @@ def upload_to_gsheets(credentials, spreadsheet, chunks):
 
     print("Done uploading files.")
     return None
-
 
 
 
