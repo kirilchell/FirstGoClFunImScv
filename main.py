@@ -253,19 +253,13 @@ def append_data(df, worksheet):
             print(f"Error appending data to spreadsheet: {e}")
             return
 
-def process_and_upload_files(credentials, spreadsheet, local_file_path):
-
-    def reauthorize(credentials):
+def reauthorize(credentials):
         print("Reauthorizing credentials...")
         gc = gspread.authorize(credentials)
         print("Credentials reauthorized.")
         return gc.open_by_key(spreadsheet_id)  # Возвращаем новый объект Spreadsheet
 
-    print("Authorizing credentials...")
-    gc = gspread.authorize(credentials)
-    print("Credentials authorized.")
-
-    spreadsheet_id = spreadsheet.id  # сохраняем id таблицы для повторной авторизации
+def process_files(local_file_path):
 
     print("Unzipping file...")
     try:
@@ -279,8 +273,8 @@ def process_and_upload_files(credentials, spreadsheet, local_file_path):
 
     chunksize = 200000
     header = None
-
-    print("Loading chunk into Google Sheets...")
+    chunks = []
+    
     try:
         print("Reading and processing CSV file...")
         encoding = detect_encoding(csv_file)
@@ -307,40 +301,10 @@ def process_and_upload_files(credentials, spreadsheet, local_file_path):
             chunk = chunk.astype(str)
             print("Data converted.")
 
-            print("Appending data to spreadsheet...")
-            worksheet = spreadsheet.worksheet("transit")
-            try:
-                append_data(chunk, worksheet)
-            except Exception as e:
-                print("Error appending data to spreadsheet:", e)
-                return
-            print("Data appended.")
+            chunks.append(chunk)
 
-            # удаляем чанк
-            del chunk
-            # принудительный вызов сборщика мусора
-            garbage_collector.collect()
-
-            # Если номер чанка кратен 5, выполняем паузу и повторную авторизацию
-            if (chunk_id + 1) % 5 == 0:
-                print("Pause for 60 seconds...")
-                spreadsheet = reauthorize(credentials)
-
-        # Переименовываем лист после обработки всех чанков
-        print("Renaming sheet to 'ready'...")
-        try:
-            worksheet.update_title('ready')
-        except Exception as e:
-            print("Error renaming sheet:", e)
-
-    except Exception as e:
-        print("Error reading CSV file:", e)
-
-    print("Done processing and uploading files.")
-    return None
-
-
-
+    print("Done processing files.")
+    return chunks
 
 
 
