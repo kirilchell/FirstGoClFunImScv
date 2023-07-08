@@ -245,7 +245,7 @@ def detect_encoding(file_path, num_bytes=10000):
 
 def append_data(df, worksheet):
     # Разделите df на подчанки размером 40000 строк
-    chunks = [df[i:i + 40000] for i in range(0, df.shape[0], 40000)]
+    chunks = [df[i:i + 20000] for i in range(0, df.shape[0],20000)]
 
     for i, chunk in enumerate(chunks):
         try:
