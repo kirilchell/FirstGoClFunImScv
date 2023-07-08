@@ -246,14 +246,15 @@ def detect_encoding(file_path, num_bytes=10000):
 def append_data(df, worksheet):
     # Разделите df на подчанки размером 40000 строк
     chunks = [df[i:i + 40000] for i in range(0, df.shape[0], 40000)]
-    
-    for chunk in chunks:
+
+    for i, chunk in enumerate(chunks):
         try:
             chunk_str = chunk.astype(str)
             chunk_list = chunk_str.values.tolist()
             worksheet.append_rows(chunk_list)
+            print(f"Successfully appended chunk {i+1} of {len(chunks)} to the worksheet.")
         except Exception as e:
-            print(f"Error appending data to spreadsheet: {e}")
+            print(f"Error appending chunk {i+1} to the worksheet: {e}")
             return
 
 def reauthorize(credentials):
