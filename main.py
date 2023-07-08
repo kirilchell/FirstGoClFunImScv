@@ -260,55 +260,48 @@ def reauthorize(credentials):
         print("Credentials reauthorized.")
         return gc.open_by_key(spreadsheet_id)  # Возвращаем новый объект Spreadsheet
 
-def process_files(local_file_path):
+def process_files(local_file_path): 
+  
+    try: 
+        logging.info("Unzipping file...") 
+        os.system('gunzip -c ' + local_file_path + ' > ' + local_file_path[:-3]) 
+        logging.info("File unzipped.") 
+  
+        csv_file = local_file_path[:-3] 
+  
+        chunksize = 200000 
+        header = None 
+        chunks = [] 
 
-    print("Unzipping file...")
-    try:
-        os.system('gunzip -c ' + local_file_path + ' > ' + local_file_path[:-3])
-    except Exception as e:
-        print("Error unzipping file:", e)
-        return
-    print("File unzipped.")
+        logging.info("Reading and processing CSV file...") 
+        encoding = detect_encoding(csv_file) 
+        logging.info(f"Detected encoding: {encoding}")  # вывод кодировки в логи 
+        for chunk_id, chunk in enumerate(pd.read_csv(csv_file, encoding=encoding, sep=';', chunksize=chunksize, dtype=str)): 
+            logging.info(f'Processing chunk number: {chunk_id}') 
+  
+            if header is None: 
+                logging.info("Processing header...") 
+                header = chunk.columns.values[:8].tolist() + ['Инфо Магазин'] 
+  
+            logging.info("Processing chunk data...") 
+            chunk['Инфо Магазин'] = chunk.iloc[:, 8:].apply(lambda row: '_'.join(row.dropna().astype(str)), axis=1) 
+  
+            logging.info("Before selecting columns...") 
+            chunk = chunk[header] 
+            logging.info("After selecting columns...") 
+  
+            logging.info("Converting data to string format...") 
+            chunk = chunk.astype(str) 
+            logging.info("Data converted.") 
+  
+            chunks.append(chunk) 
 
-    csv_file = local_file_path[:-3]
+    except Exception as e: 
+        logging.error(f"An error occurred: {e}") 
 
-    chunksize = 200000
-    header = None
-    chunks = []
-    
-    try:
-        print("Reading and processing CSV file...")
-        encoding = detect_encoding(csv_file)
-        print(f"Detected encoding: {encoding}")  # вывод кодировки в логи
-        for chunk_id, chunk in enumerate(pd.read_csv(csv_file, encoding=encoding, sep=';', chunksize=chunksize, dtype=str)):
-            print(f'Processing chunk number: {chunk_id}')
-
-            # Обрабатываем заголовок
-            if header is None:
-                print("Processing header...")
-                header = chunk.columns.values[:8].tolist() + ['Инфо Магазин']
-
-            # Объединяем все столбцы после восьмого и пропускаем пустые ячейки
-            print("Processing chunk data...")
-            chunk['Инфо Магазин'] = chunk.iloc[:, 8:].apply(lambda row: '_'.join(row.dropna().astype(str)), axis=1)
-
-            # Выбор столбцов
-            print("Before selecting columns...")
-            chunk = chunk[header]
-            print("After selecting columns...")
-
-            # Преобразуем все данные в строковый формат
-            print("Converting data to string format...")
-            chunk = chunk.astype(str)
-            print("Data converted.")
-
-            
-
-            chunks.append(chunk)
-
-    print("Done processing files.")
-    return chunks
-
+    finally: 
+        logging.info("Done processing files.") 
+        return chunks 
 
 
 
