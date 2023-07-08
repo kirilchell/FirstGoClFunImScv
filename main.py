@@ -55,7 +55,7 @@ def main(event, context):
         upload_to_drive(data_file_path, parent_id, credentials, filename)
         
         spreadsheet = search_file_create(filename, credentials, parent_folder_id, num_files)
-        process_and_upload_files(credentials, spreadsheet, data_file_path) # перемещено перед удалением файла
+        process_files(data_file_path) # перемещено перед удалением файла
 
         if os.path.isfile(data_file_path):
             os.remove(data_file_path)
