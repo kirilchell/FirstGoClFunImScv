@@ -54,9 +54,11 @@ def main(event, context):
         parent_id = "1vTrm1w6YsGbMv4AVLr-GdYdGdbGHooCw"
         upload_to_drive(data_file_path, parent_id, credentials, filename)
         
-        process_files(data_file_path) # перемещено перед удалением файла
+        chunks = process_files(data_file_path) # перемещено перед удалением файла
 
         spreadsheet = search_file_create(filename, credentials, parent_folder_id, num_files)
+
+        upload_to_gsheets(credentials, spreadsheet, chunks)
 
         if os.path.isfile(data_file_path):
             os.remove(data_file_path)
@@ -302,6 +304,33 @@ def process_files(local_file_path):
     finally: 
         logging.info("Done processing files.") 
         return chunks 
+
+def upload_to_gsheets(credentials, spreadsheet, chunks):
+    print("Authorizing credentials...")
+    gc = gspread.authorize(credentials)
+    print("Credentials authorized.")
+
+    spreadsheet_id = spreadsheet.id  # сохраняем id таблицы для повторной авторизации
+
+    print("Appending data to spreadsheet...")
+    worksheet = spreadsheet.worksheet("transit")
+    try:
+        for chunk in chunks:
+            append_data(chunk, worksheet)
+    except Exception as e:
+        print("Error appending data to spreadsheet:", e)
+        return
+    print("Data appended.")
+
+    # Переименовываем лист после обработки всех чанков
+    print("Renaming sheet to 'ready'...")
+    try:
+        worksheet.update_title('ready')
+    except Exception as e:
+        print("Error renaming sheet:", e)
+
+    print("Done uploading files.")
+    return None
 
 
 
