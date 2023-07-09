@@ -334,5 +334,53 @@ def upload_to_gsheets(credentials, spreadsheet, chunks):
     return None
 
 
+from googleapiclient.discovery import build
+
+def append_datagapi(df, service, spreadsheet_id):
+    # Разделите df на подчанки размером 40000 строк
+    chunks = [df[i:i + 20000] for i in range(0, df.shape[0], 20000)]
+
+    for i, chunk in enumerate(chunks):
+        try:
+            chunk_str = chunk.astype(str)
+            chunk_list = chunk_str.values.tolist()
+            # Отправка запроса на добавление строк в лист
+            request = service.spreadsheets().values().append(
+                spreadsheetId=spreadsheet_id,
+                range='transit',  # или любое другое имя листа
+                valueInputOption='USER_ENTERED',
+                insertDataOption='INSERT_ROWS',
+                body={'values': chunk_list}
+            )
+            response = request.execute()
+            print(f"Successfully appended chunk {i+1} of {len(chunks)} to the worksheet.")
+        except Exception as e:
+            print(f"Error appending chunk {i+1} to the worksheet: {e}")
+            return
+
+def upload_to_gsheetsgapi(credentials, spreadsheet_id, chunks):
+    print("Authorizing credentials...")
+    service = build('sheets', 'v4', credentials=credentials)
+    print("Credentials authorized.")
+
+    print("Appending data to spreadsheet...")
+    try:
+        for chunk in chunks:
+            append_datagapi(chunk, service, spreadsheet_id)
+    except Exception as e:
+        print("Error appending data to spreadsheet:", e)
+        return
+    print("Data appended.")
+
+    # Переименовываем лист после обработки всех чанков
+    print("Renaming sheet to 'ready'...")
+    try:
+        worksheet.update_title('ready')
+    except Exception as e:
+        print("Error renaming sheet:", e)
+
+    print("Done uploading files.")
+    return None
+
 
 
