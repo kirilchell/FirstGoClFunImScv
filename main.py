@@ -294,6 +294,77 @@ def process_files(local_file_path, chunksize):
         logging.info("Done processing files.") 
         return chunks 
 
+from googleapiclient.discovery import build
+
+
+def append_datagapi(df, service, spreadsheet_id, worksheet_id, chunk_size=50000): 
+    # Разделите df на подчанки размером chunk_size строк  
+    chunks = [df[i:i + chunk_size] for i in range(0, df.shape[0], chunk_size)]  
+
+    for i, chunk in enumerate(chunks): 
+        try: 
+            # Вычисляем номер строки для каждого подчанка 
+            start_row = i * chunk_size + 1 
+            chunk_str = chunk.astype(str) 
+            chunk_list = chunk_str.values.tolist() 
+            request = service.spreadsheets().values().append( 
+                spreadsheetId=spreadsheet_id, 
+                range=f'transit!A{start_row}',  # Here we define the starting cell for each chunk
+                valueInputOption='USER_ENTERED', 
+                insertDataOption='INSERT_ROWS', 
+                body={'values': chunk_list} 
+            ) 
+            response = request.execute() 
+            logging.info(f"Successfully appended chunk {i+1} of {len(chunks)} to the worksheet.") 
+        except Exception as e: 
+            logging.error(f"Error appending chunk {i+1} to the worksheet: {e}") 
+            continue 
+        time.sleep(10) 
+
+def upload_to_gsheetsgapi(credentials, spreadsheet, chunks): 
+    logging.info("Authorizing credentials...") 
+    service = build('sheets', 'v4', credentials=credentials) 
+    gc = gspread.authorize(credentials) 
+    logging.info("Credentials authorized.") 
+
+    spreadsheet_id = spreadsheet.id  # get the spreadsheet ID from the spreadsheet object 
+    worksheet = spreadsheet.worksheet("transit") 
+    worksheet_id = worksheet.id  # get the worksheet ID from the worksheet object 
+
+    logging.info("Appending data to spreadsheet...") 
+    try: 
+        for chunk in chunks: 
+            append_datagapi(chunk, service, spreadsheet_id, worksheet_id) 
+    except Exception as e: 
+        logging.error(f"Error appending data to spreadsheet: {e}") 
+        return 
+    logging.info("Data appended.") 
+
+    # Rename the sheet after all chunks have been processed 
+    logging.info("Renaming sheet to 'ready'...") 
+    try: 
+        request = service.spreadsheets().batchUpdate( 
+            spreadsheetId=spreadsheet_id, 
+            body={ 
+                "requests": [ 
+                    { 
+                        "updateSheetProperties": { 
+                            "properties": { 
+                                "sheetId": worksheet_id,  # Change to the ID of your sheet 
+                                "title": "ready" 
+                            }, 
+                            "fields": "title" 
+                        } 
+                    } 
+                ] 
+            } 
+        ) 
+        response = request.execute() 
+    except Exception as e: 
+        logging.error(f"Error renaming sheet: {e}") 
+
+    logging.info("Done uploading files.") 
+    return None
 
 
 
