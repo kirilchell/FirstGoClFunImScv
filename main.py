@@ -58,7 +58,7 @@ def main(event, context):
 
         spreadsheet = search_file_create(filename, credentials, parent_folder_id, num_files)
 
-        upload_to_gsheetsgapi(credentials, spreadsheet, chunks)
+        upload_to_gsheets(credentials, spreadsheet, chunks)
 
         if os.path.isfile(data_file_path):
             os.remove(data_file_path)
@@ -256,6 +256,7 @@ def append_data(df, worksheet):
         except Exception as e:
             print(f"Error appending chunk {i+1} to the worksheet: {e}")
             return
+        time.sleep(70)
 
 def reauthorize(credentials):
         print("Reauthorizing credentials...")
@@ -334,72 +335,6 @@ def upload_to_gsheets(credentials, spreadsheet, chunks):
     return None
 
 
-from googleapiclient.discovery import build
 
-def append_datagapi(df, service, spreadsheet_id, worksheet_id):
-    chunks = [df[i:i + 20000] for i in range(0, df.shape[0], 20000)]
-
-    for i, chunk in enumerate(chunks):
-        try:
-            chunk_str = chunk.astype(str)
-            chunk_list = chunk_str.values.tolist()
-            request = service.spreadsheets().values().append(
-                spreadsheetId=spreadsheet_id,
-                range='transit',
-                valueInputOption='USER_ENTERED',
-                insertDataOption='INSERT_ROWS',
-                body={'values': chunk_list}
-            )
-            response = request.execute()
-            logging.info(f"Successfully appended chunk {i+1} of {len(chunks)} to the worksheet.")
-        except Exception as e:
-            logging.error(f"Error appending chunk {i+1} to the worksheet: {e}")
-            continue
-        time.sleep(90)
-
-def upload_to_gsheetsgapi(credentials, spreadsheet, chunks):
-    logging.info("Authorizing credentials...")
-    service = build('sheets', 'v4', credentials=credentials)
-    gc = gspread.authorize(credentials)
-    logging.info("Credentials authorized.")
-    
-    spreadsheet_id = spreadsheet.id  # get the spreadsheet ID from the spreadsheet object
-    worksheet = spreadsheet.worksheet("transit")
-    worksheet_id = worksheet.id  # get the worksheet ID from the worksheet object
-
-    logging.info("Appending data to spreadsheet...")
-    try:
-        for chunk in chunks:
-            append_datagapi(chunk, service, spreadsheet_id, worksheet_id)
-    except Exception as e:
-        logging.error(f"Error appending data to spreadsheet: {e}")
-        return
-    logging.info("Data appended.")
-
-    # Rename the sheet after all chunks have been processed
-    logging.info("Renaming sheet to 'ready'...")
-    try:
-        request = service.spreadsheets().batchUpdate(
-            spreadsheetId=spreadsheet_id,
-            body={
-                "requests": [
-                    {
-                        "updateSheetProperties": {
-                            "properties": {
-                                "sheetId": worksheet_id,  # Change to the ID of your sheet
-                                "title": "ready"
-                            },
-                            "fields": "title"
-                        }
-                    }
-                ]
-            }
-        )
-        response = request.execute()
-    except Exception as e:
-        logging.error(f"Error renaming sheet: {e}")
-
-    logging.info("Done uploading files.")
-    return None
 
 
