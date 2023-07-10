@@ -230,7 +230,7 @@ def search_file_create(filename, credentials, parent_folder_id, num_files):
         new_sheet.update_title("transit")
 
         # Resize the new sheet
-        new_sheet.resize(rows=700000, cols=9)
+        new_sheet.resize(rows=100, cols=9)
     except Exception as e:
         print(f"Error while manipulating worksheets: {e}")
         return
@@ -244,21 +244,24 @@ def detect_encoding(file_path, num_bytes=10000):
     result = chardet.detect(rawdata)
     return result['encoding']
 
-def append_data(df, worksheet):
-    # Разделите df на подчанки размером 50000 строк
-    chunks = [df[i:i + 50000] for i in range(0, df.shape[0],50000)]
+def append_data(df, worksheet, chunk_size=50000): 
+    # Разделите df на подчанки размером chunk_size строк 
+    chunks = [df[i:i + chunk_size] for i in range(0, df.shape[0], chunk_size)] 
 
-    for i, chunk in enumerate(chunks):
-        try:
-            chunk_str = chunk.astype(str)
-            chunk_list = chunk_str.values.tolist()
-            worksheet.append_rows(chunk_list)
-            print(f"Successfully appended chunk {i+1} of {len(chunks)} to the worksheet.")
-        except Exception as e:
-            print(f"Error appending chunk {i+1} to the worksheet: {e}")
-            return
+    for i, chunk in enumerate(chunks): 
+        try: 
+            # Вычисляем номер строки для каждого подчанка
+            start_row = i * chunk_size + 1
+            chunk_str = chunk.astype(str) 
+            chunk_list = chunk_str.values.tolist() 
+            # Используем insert_rows вместо append_rows, чтобы указать номер строки
+            worksheet.insert_rows(start_row, chunk_list) 
+            print(f"Successfully appended chunk {i+1} of {len(chunks)} to the worksheet.") 
+        except Exception as e: 
+            print(f"Error appending chunk {i+1} to the worksheet: {e}") 
+            return 
 
-     time.sleep(70)
+        time.sleep(10)
 
 def reauthorize(credentials):
         print("Reauthorizing credentials...")
