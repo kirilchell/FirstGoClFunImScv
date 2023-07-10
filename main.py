@@ -55,7 +55,7 @@ def main(event, context):
         parent_id = "1vTrm1w6YsGbMv4AVLr-GdYdGdbGHooCw"
         upload_to_drive(data_file_path, parent_id, credentials, filename)
         
-        csv_file, num_lines = unzip_and_count_lines(local_file_path)
+        csv_file, num_lines = unzip_and_count_lines(data_file_path)
 
         chunks = process_unzipped_file(csv_file, chunksize)
 
