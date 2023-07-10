@@ -57,7 +57,9 @@ def main(event, context):
         
         chunks = process_files(data_file_path, chunksize) # перемещено перед удалением файла
 
-        spreadsheet = search_file_create(filename, credentials, parent_folder_id, num_files)
+        file_objects, service = create_and_move_files(filename, credentials, parent_folder_id, num_files)
+
+        spreadsheet = process_last_modified_file(file_objects, service)
 
         upload_to_gsheetsgapi(credentials, spreadsheet, chunks)
 
@@ -173,10 +175,7 @@ def upload_to_drive(local_file, parent_id, credentials, filename):
     resilient_request_execute(request)
 
 
-
-def search_file_create(filename, credentials, parent_folder_id, num_files):
-    
-
+def create_and_move_files(filename, credentials, parent_folder_id, num_files):
     gc = gspread.authorize(credentials)
     files = gc.list_spreadsheet_files()
 
@@ -206,6 +205,9 @@ def search_file_create(filename, credentials, parent_folder_id, num_files):
                 removeParents=previous_parents,
                 fields='id, parents').execute()
 
+    return file_objects, service
+
+def process_last_modified_file(file_objects, service):
     # Получение последнего измененного файла
     last_modified_file = min(
         file_objects,
@@ -236,7 +238,6 @@ def search_file_create(filename, credentials, parent_folder_id, num_files):
         return
 
     return last_modified_file
-
 
 def detect_encoding(file_path, num_bytes=10000):
     with open(file_path, 'rb') as f:
