@@ -55,7 +55,10 @@ def main(event, context):
         parent_id = "1vTrm1w6YsGbMv4AVLr-GdYdGdbGHooCw"
         upload_to_drive(data_file_path, parent_id, credentials, filename)
         
-        chunks = process_files(data_file_path, chunksize) # перемещено перед удалением файла
+        csv_file, num_lines = unzip_and_count_lines(local_file_path)
+
+        chunks = process_unzipped_file(csv_file, chunksize)
+
 
         file_objects, service = create_and_move_files(filename, credentials, parent_folder_id, num_files)
 
@@ -252,48 +255,52 @@ def reauthorize(credentials):
         print("Credentials reauthorized.")
         return gc.open_by_key(spreadsheet_id)  # Возвращаем новый объект Spreadsheet
 
-def process_files(local_file_path, chunksize): 
-  
-    try: 
-        logging.info("Unzipping file...") 
-        os.system('gunzip -c ' + local_file_path + ' > ' + local_file_path[:-3]) 
-        logging.info("File unzipped.") 
-  
-        csv_file = local_file_path[:-3] 
-  
-         
-        header = None 
-        chunks = [] 
+def unzip_and_count_lines(local_file_path):
+    try:
+        logging.info("Unzipping file...")
+        os.system('gunzip -c ' + local_file_path + ' > ' + local_file_path[:-3])
+        logging.info("File unzipped.")
+        csv_file = local_file_path[:-3]
+        num_lines = sum(1 for line in open(csv_file))
+        logging.info(f"Number of lines in the file: {num_lines}")
+    except Exception as e:
+        logging.error(f"An error occurred while unzipping file: {e}")
+        return None, 0
+    return csv_file, num_lines
 
-        logging.info("Reading and processing CSV file...") 
-        encoding = detect_encoding(csv_file) 
-        logging.info(f"Detected encoding: {encoding}")  # вывод кодировки в логи 
-        for chunk_id, chunk in enumerate(pd.read_csv(csv_file, encoding=encoding, sep=';', chunksize=chunksize, dtype=str)): 
-            logging.info(f'Processing chunk number: {chunk_id}') 
-  
-            if header is None: 
-                logging.info("Processing header...") 
-                header = chunk.columns.values[:8].tolist() + ['Инфо Магазин'] 
-  
-            logging.info("Processing chunk data...") 
-            chunk['Инфо Магазин'] = chunk.iloc[:, 8:].apply(lambda row: '_'.join(row.dropna().astype(str)), axis=1) 
-  
-            logging.info("Before selecting columns...") 
-            chunk = chunk[header] 
-            logging.info("After selecting columns...") 
-  
-            logging.info("Converting data to string format...") 
-            chunk = chunk.astype(str) 
-            logging.info("Data converted.") 
-  
-            chunks.append(chunk) 
+def process_unzipped_file(csv_file, chunksize):
+    chunks = []
+    try:
+        header = None
+        logging.info("Reading and processing CSV file...")
+        encoding = detect_encoding(csv_file)
+        logging.info(f"Detected encoding: {encoding}")
+        for chunk_id, chunk in enumerate(pd.read_csv(csv_file, encoding=encoding, sep=';', chunksize=chunksize, dtype=str)):
+            logging.info(f'Processing chunk number: {chunk_id}')
 
-    except Exception as e: 
-        logging.error(f"An error occurred: {e}") 
+            if header is None:
+                logging.info("Processing header...")
+                header = chunk.columns.values[:8].tolist() + ['Инфо Магазин']
 
-    finally: 
-        logging.info("Done processing files.") 
-        return chunks 
+            logging.info("Processing chunk data...")
+            chunk['Инфо Магазин'] = chunk.iloc[:, 8:].apply(lambda row: '_'.join(row.dropna().astype(str)), axis=1)
+
+            logging.info("Before selecting columns...")
+            chunk = chunk[header]
+            logging.info("After selecting columns...")
+
+            logging.info("Converting data to string format...")
+            chunk = chunk.astype(str)
+            logging.info("Data converted.")
+
+            chunks.append(chunk)
+
+    except Exception as e:
+        logging.error(f"An error occurred: {e}")
+
+    finally:
+        logging.info("Done processing files.")
+        return chunks
 
 from googleapiclient.discovery import build
 
