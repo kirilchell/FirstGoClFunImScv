@@ -257,7 +257,8 @@ def append_data(df, worksheet):
         except Exception as e:
             print(f"Error appending chunk {i+1} to the worksheet: {e}")
             return
-        time.sleep(70)
+
+     time.sleep(70)
 
 def reauthorize(credentials):
         print("Reauthorizing credentials...")
