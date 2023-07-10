@@ -1,0 +1,47 @@
+def upload_to_gsheets(credentials, spreadsheet, chunks):
+    print("Authorizing credentials...")
+    gc = gspread.authorize(credentials)
+    print("Credentials authorized.")
+
+    spreadsheet_id = spreadsheet.id  # сохраняем id таблицы для повторной авторизации
+
+    print("Appending data to spreadsheet...")
+    worksheet = spreadsheet.worksheet("transit")
+    try:
+        for chunk in chunks:
+            append_data(chunk, worksheet)
+    except Exception as e:
+        print("Error appending data to spreadsheet:", e)
+        return
+    print("Data appended.")
+
+    # Переименовываем лист после обработки всех чанков
+    print("Renaming sheet to 'ready'...")
+    try:
+        worksheet.update_title('ready')
+    except Exception as e:
+        print("Error renaming sheet:", e)
+
+    print("Done uploading files.")
+    return None
+
+
+
+def append_data(df, worksheet, chunk_size=50000): 
+    # Разделите df на подчанки размером chunk_size строк 
+    chunks = [df[i:i + chunk_size] for i in range(0, df.shape[0], chunk_size)] 
+
+    for i, chunk in enumerate(chunks): 
+        try: 
+            # Вычисляем номер строки для каждого подчанка
+            start_row = i * chunk_size + 1
+            chunk_str = chunk.astype(str) 
+            chunk_list = chunk_str.values.tolist() 
+            # Используем insert_rows вместо append_rows, чтобы указать номер строки
+            worksheet.insert_rows(start_row, chunk_list) 
+            print(f"Successfully appended chunk {i+1} of {len(chunks)} to the worksheet.") 
+        except Exception as e: 
+            print(f"Error appending chunk {i+1} to the worksheet: {e}") 
+            return 
+
+        time.sleep(10)
