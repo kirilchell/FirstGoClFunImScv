@@ -35,6 +35,7 @@ parent_folder_id = '1vTrm1w6YsGbMv4AVLr-GdYdGdbGHooCw'  # id папки в Googl
 os.environ['ONLINER_EMAIL'] = 'Watchshop'
 os.environ['ONLINER_PASSWORD'] = 'O2203833'
 filename = 'b2bonlinerAerae'
+chunksize = 200000
 
 def main(event, context):
     email = os.getenv('ONLINER_EMAIL')
@@ -54,7 +55,7 @@ def main(event, context):
         parent_id = "1vTrm1w6YsGbMv4AVLr-GdYdGdbGHooCw"
         upload_to_drive(data_file_path, parent_id, credentials, filename)
         
-        chunks = process_files(data_file_path) # перемещено перед удалением файла
+        chunks = process_files(data_file_path, chunksize) # перемещено перед удалением файла
 
         spreadsheet = search_file_create(filename, credentials, parent_folder_id, num_files)
 
@@ -244,8 +245,8 @@ def detect_encoding(file_path, num_bytes=10000):
     return result['encoding']
 
 def append_data(df, worksheet):
-    # Разделите df на подчанки размером 40000 строк
-    chunks = [df[i:i + 5000] for i in range(0, df.shape[0],5000)]
+    # Разделите df на подчанки размером 50000 строк
+    chunks = [df[i:i + 50000] for i in range(0, df.shape[0],50000)]
 
     for i, chunk in enumerate(chunks):
         try:
@@ -264,7 +265,7 @@ def reauthorize(credentials):
         print("Credentials reauthorized.")
         return gc.open_by_key(spreadsheet_id)  # Возвращаем новый объект Spreadsheet
 
-def process_files(local_file_path): 
+def process_files(local_file_path, chunksize): 
   
     try: 
         logging.info("Unzipping file...") 
@@ -273,7 +274,7 @@ def process_files(local_file_path):
   
         csv_file = local_file_path[:-3] 
   
-        chunksize = 200000 
+         
         header = None 
         chunks = [] 
 
