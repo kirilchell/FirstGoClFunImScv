@@ -355,7 +355,7 @@ def append_datagapi(df, service, spreadsheet_id, worksheet_id):
         except Exception as e:
             logging.error(f"Error appending chunk {i+1} to the worksheet: {e}")
             continue
-            time.sleep(90)
+        time.sleep(90)
 
 def upload_to_gsheetsgapi(credentials, spreadsheet, chunks):
     logging.info("Authorizing credentials...")
