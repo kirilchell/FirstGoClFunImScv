@@ -53,7 +53,7 @@ def main(event, context):
         credentials = get_credentials()
 
         parent_id = "1vTrm1w6YsGbMv4AVLr-GdYdGdbGHooCw"
-        upload_to_drive(data_file_path, parent_id, credentials, filename)
+        # upload_to_drive(data_file_path, parent_id, credentials, filename)
         
         chunks = process_files(data_file_path, chunksize) # перемещено перед удалением файла
 
@@ -142,37 +142,6 @@ def download_file(session, url, local_filename):
         print(f'Ошибка при скачивании файла. Код статуса: {r.status_code}')
 
 
-
-def upload_to_drive(local_file, parent_id, credentials, filename):
-    drive_service = build('drive', 'v3', credentials=credentials)
-    
-    # Search for the file in the drive folder
-    file_list = drive_service.files().list(q=f"'{parent_id}' in parents and trashed=false").execute().get('files', [])
-    for file in file_list:
-        if file['name'] == filename:
-            # If file is found, update the existing file
-            media = MediaFileUpload(local_file,
-                                    mimetype='application/gzip',
-                                    resumable=True)
-            request = drive_service.files().update(
-                fileId=file['id'],
-                media_body=media,
-            )
-            resilient_request_execute(request)
-            return
-
-    # If file not found, then create new file and upload
-    file_metadata = {
-        'name': filename,
-        'parents': [parent_id],
-        'mimeType': 'application/gzip'
-    }
-    media = MediaFileUpload(local_file, 
-                            mimetype='application/gzip',
-                            resumable=True)
-    request = drive_service.files().create(body=file_metadata,
-                                           media_body=media)
-    resilient_request_execute(request)
 
 
 def create_and_move_files(filename, credentials, parent_folder_id, num_files):
