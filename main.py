@@ -244,24 +244,6 @@ def detect_encoding(file_path, num_bytes=10000):
     result = chardet.detect(rawdata)
     return result['encoding']
 
-def append_data(df, worksheet, chunk_size=50000): 
-    # Разделите df на подчанки размером chunk_size строк 
-    chunks = [df[i:i + chunk_size] for i in range(0, df.shape[0], chunk_size)] 
-
-    for i, chunk in enumerate(chunks): 
-        try: 
-            # Вычисляем номер строки для каждого подчанка
-            start_row = i * chunk_size + 1
-            chunk_str = chunk.astype(str) 
-            chunk_list = chunk_str.values.tolist() 
-            # Используем insert_rows вместо append_rows, чтобы указать номер строки
-            worksheet.insert_rows(start_row, chunk_list) 
-            print(f"Successfully appended chunk {i+1} of {len(chunks)} to the worksheet.") 
-        except Exception as e: 
-            print(f"Error appending chunk {i+1} to the worksheet: {e}") 
-            return 
-
-        time.sleep(10)
 
 def reauthorize(credentials):
         print("Reauthorizing credentials...")
@@ -340,6 +322,25 @@ def upload_to_gsheets(credentials, spreadsheet, chunks):
     return None
 
 
+
+def append_data(df, worksheet, chunk_size=50000): 
+    # Разделите df на подчанки размером chunk_size строк 
+    chunks = [df[i:i + chunk_size] for i in range(0, df.shape[0], chunk_size)] 
+
+    for i, chunk in enumerate(chunks): 
+        try: 
+            # Вычисляем номер строки для каждого подчанка
+            start_row = i * chunk_size + 1
+            chunk_str = chunk.astype(str) 
+            chunk_list = chunk_str.values.tolist() 
+            # Используем insert_rows вместо append_rows, чтобы указать номер строки
+            worksheet.insert_rows(start_row, chunk_list) 
+            print(f"Successfully appended chunk {i+1} of {len(chunks)} to the worksheet.") 
+        except Exception as e: 
+            print(f"Error appending chunk {i+1} to the worksheet: {e}") 
+            return 
+
+        time.sleep(10)
 
 
 
