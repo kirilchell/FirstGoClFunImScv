@@ -59,7 +59,7 @@ def main(event, context):
 
         spreadsheet = search_file_create(filename, credentials, parent_folder_id, num_files)
 
-        upload_to_gsheets(credentials, spreadsheet, chunks)
+        upload_to_gsheetsgapi(credentials, spreadsheet, chunks)
 
         if os.path.isfile(data_file_path):
             os.remove(data_file_path)
