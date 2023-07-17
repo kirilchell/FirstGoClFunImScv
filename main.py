@@ -230,6 +230,9 @@ def process_and_upload_files(local_file_path, chunksize, file_objects, service_d
         spreadsheet_ids = set()  # для хранения уникальных id таблиц
 
         logging.info("Beginning chunk processing...")
+        
+        spreadsheet = process_last_modified_file(file_objects, service_drive)
+
         for chunk_id, chunk in enumerate(pd.read_csv(csv_file, encoding=encoding, sep=';', chunksize=chunksize, dtype=str)): 
             logging.info(f'Processing chunk number: {chunk_id}') 
 
@@ -244,7 +247,7 @@ def process_and_upload_files(local_file_path, chunksize, file_objects, service_d
             chunk = chunk[header] 
             chunk = chunk.astype(str) 
 
-            spreadsheet = process_last_modified_file(file_objects, service_drive)
+            #spreadsheet = process_last_modified_file(file_objects, service_drive)
             spreadsheet_id = upload_to_gsheetsgapi(credentials_list, file_objects, service_drive, [chunk], spreadsheet)
             spreadsheet_ids.add(spreadsheet_id)
             logging.info("Chunk uploaded.")
