@@ -28,7 +28,7 @@ parent_folder_id = '1vTrm1w6YsGbMv4AVLr-GdYdGdbGHooCw'  # id папки в Googl
 os.environ['ONLINER_EMAIL'] = 'Watchshop'
 os.environ['ONLINER_PASSWORD'] = 'O2203833'
 filename = 'b2bonlinerAerae'
-chunksize = 100000
+chunksize = 50000
 
 def main(event, context):
     email = os.getenv('ONLINER_EMAIL')
