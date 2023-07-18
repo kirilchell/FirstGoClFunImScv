@@ -293,18 +293,12 @@ def process_and_upload_files(local_file_path, chunksize, file_objects, service_d
 
 
 def upload_to_gsheetsgapi(credentials_list, file_objects, service_drive, chunks, spreadsheet): 
-
-    credentials = credentials_list[0]
-    try: 
-        print("Authorizing credentials gsheetsgapi...") 
-        service_sheet = build('sheets', 'v4', credentials=credentials) 
-        gc = gspread.authorize(credentials) 
-        logging.info("Authorizing credentials account: {credentials.service_account_email}")  
-    except Exception as e: 
-        print(f"Error authorizing credentials: {e}")
-
+        
     for i, chunk in enumerate(chunks): 
         credentials = credentials_list[i % len(credentials_list)]
+        logging.info("Authorizing credentials account: {credentials.service_account_email}")
+        service_sheet = build('sheets', 'v4', credentials=credentials) 
+        print(f"Error authorizing credentials: {e}")
         try:
             print("Appending data to spreadsheet...") 
             file = file_objects[i % len(file_objects)]  # выбираем соответствующий файл для чанка
