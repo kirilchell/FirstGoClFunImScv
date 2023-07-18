@@ -321,26 +321,24 @@ def upload_to_gsheetsgapi(credentials_list, file_objects, service_drive, chunks,
     print("Done uploading files.") 
     return spreadsheet_id
 
-def append_datagapi(df, service_sheet, spreadsheet_id, worksheet_id, chunk_size=50000): 
-    # Разделите df на подчанки размером chunk_size строк  
-    chunks = [df[i:i + chunk_size] for i in range(0, df.shape[0], chunk_size)]  
+def append_datagapi(df, service_sheet, spreadsheet_id, worksheet_id, chunk_size=50000):
+    chunks = [df[i:i + chunk_size] for i in range(0, df.shape[0], chunk_size)]
+  
+    for i, chunk in enumerate(chunks):
+        try:
+            chunk_str = chunk.astype(str)
+            chunk_list = chunk_str.values.tolist()
+            request = service_sheet.spreadsheets().values().append(
+                spreadsheetId=spreadsheet_id,
+                range=worksheet_id,  # Теперь передаем worksheet_id, который указывает на таблицу и не зависит от индексов
+                valueInputOption='RAW',  # Используем RAW для добавления данных без определения индекса
+                insertDataOption='INSERT_ROWS',
+                body={'values': chunk_list}
+            )
+            response = request.execute()
+            logging.info(f"Successfully appended chunk {i+1} of {len(chunks)} to the worksheet.")
+        except Exception as e:
+            logging.error(f"Error appending chunk {i+1} to the worksheet: {e}")
+            continue
+        time.sleep(1)
 
-    for i, chunk in enumerate(chunks): 
-        try: 
-            # Вычисляем номер строки для каждого подчанка 
-            start_row = i * chunk_size + 1 
-            chunk_str = chunk.astype(str) 
-            chunk_list = chunk_str.values.tolist() 
-            request = service_sheet.spreadsheets().values().append( 
-                spreadsheetId=spreadsheet_id, 
-                range=f'transit!A{start_row}',  # Here we define the starting cell for each chunk
-                valueInputOption='USER_ENTERED', 
-                insertDataOption='INSERT_ROWS', 
-                body={'values': chunk_list} 
-            ) 
-            response = request.execute() 
-            logging.info(f"Successfully appended chunk {i+1} of {len(chunks)} to the worksheet.") 
-        except Exception as e: 
-            logging.error(f"Error appending chunk {i+1} to the worksheet: {e}") 
-            continue 
-        time.sleep(1) 
