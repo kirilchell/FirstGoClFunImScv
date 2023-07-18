@@ -298,12 +298,12 @@ def upload_to_gsheetsgapi(credentials_list, file_objects, service_drive, chunks,
 
     #credentials = credentials_list[0]
     try: 
-        print("Authorizing credentials gsheetsgapi...") 
+        logging.info("Authorizing credentials account: {credentials.service_account_email}") 
         service_sheet = build('sheets', 'v4', credentials=credentials) 
         gc = gspread.authorize(credentials) 
-        print("Credentials authorized gsheetsgapi.") 
+        logging.info(f"Authorizing credentials for account: {credentials.service_account_email}")
     except Exception as e: 
-        print(f"Error authorizing credentials: {e}")
+        logging.error(f"Error authorizing account {credentials.service_account_email}: {e}")
 
     for i, chunk in enumerate(chunks): 
         credentials = credentials_list[i % len(credentials_list)]
