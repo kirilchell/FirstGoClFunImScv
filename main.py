@@ -233,6 +233,9 @@ def process_and_upload_files(local_file_path, chunksize, file_objects, service_d
         
         spreadsheet = process_last_modified_file(file_objects, service_drive)
 
+        # Используем itertools.cycle для циклического перебора учетных данных
+        credentials_cycle = itertools.cycle(credentials_list)
+
         for chunk_id, chunk in enumerate(pd.read_csv(csv_file, encoding=encoding, sep=';', chunksize=chunksize, dtype=str)): 
             logging.info(f'Processing chunk number: {chunk_id}') 
 
@@ -248,7 +251,9 @@ def process_and_upload_files(local_file_path, chunksize, file_objects, service_d
             chunk = chunk.astype(str) 
 
             #spreadsheet = process_last_modified_file(file_objects, service_drive)
-            spreadsheet_id = upload_to_gsheetsgapi(credentials_list, file_objects, service_drive, [chunk], spreadsheet)
+            # Используем next(credentials_cycle) для получения следующего набора учетных данных
+            credentials = next(credentials_cycle)
+            spreadsheet_id = upload_to_gsheetsgapi(credentials, file_objects, service_drive, [chunk], spreadsheet)
             spreadsheet_ids.add(spreadsheet_id)
             logging.info("Chunk uploaded.")
 
@@ -292,10 +297,10 @@ def process_and_upload_files(local_file_path, chunksize, file_objects, service_d
         logging.info("Done processing and uploading files.")
 
 
-def upload_to_gsheetsgapi(credentials_list, file_objects, service_drive, chunks, spreadsheet): 
-        
+def upload_to_gsheetsgapi(credentials, file_objects, service_drive, chunks, spreadsheet): 
+
     for i, chunk in enumerate(chunks): 
-        credentials = credentials_list[i % len(credentials_list)]
+        
         try:
             logging.info(f"Authorizing credentials account: {credentials.service_account_email}")
             service_sheet = build('sheets', 'v4', credentials=credentials) 
