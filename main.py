@@ -322,16 +322,25 @@ def upload_to_gsheetsgapi(credentials, file_objects, service_drive, chunks, spre
     return spreadsheet_id
 
 def append_datagapi(df, service_sheet, spreadsheet_id, worksheet_id, chunk_size=50000):
+    # Получаем текущее количество заполненных строк на листе
+    response = service_sheet.spreadsheets().values().get(
+        spreadsheetId=spreadsheet_id,
+        range=worksheet_id,
+        majorDimension='ROWS'
+    ).execute()
+    values = response.get('values', [])
+    last_row = len(values)
+
     chunks = [df[i:i + chunk_size] for i in range(0, df.shape[0], chunk_size)]
-  
+
     for i, chunk in enumerate(chunks):
         try:
             chunk_str = chunk.astype(str)
             chunk_list = chunk_str.values.tolist()
             request = service_sheet.spreadsheets().values().append(
                 spreadsheetId=spreadsheet_id,
-                range=worksheet_id,  # Теперь передаем worksheet_id, который указывает на таблицу и не зависит от индексов
-                valueInputOption='RAW',  # Используем RAW для добавления данных без определения индекса
+                range=f"{worksheet_id}!A{last_row + 1}",  # Вставляем данные в первую пустую строку
+                valueInputOption='RAW',
                 insertDataOption='INSERT_ROWS',
                 body={'values': chunk_list}
             )
