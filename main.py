@@ -19,7 +19,7 @@ from googleapiclient.errors import HttpError
 import gc as garbage_collector
 import chardet
 
-num_files = 10
+num_files = 5
 # Set up logging
 logging.basicConfig(level=logging.INFO)
 drive_disk = 'https://drive.google.com/drive/folders/1vTrm1w6YsGbMv4AVLr-GdYdGdbGHooCw'
@@ -28,7 +28,10 @@ parent_folder_id = '1vTrm1w6YsGbMv4AVLr-GdYdGdbGHooCw'  # id папки в Googl
 os.environ['ONLINER_EMAIL'] = 'Watchshop'
 os.environ['ONLINER_PASSWORD'] = 'O2203833'
 filename = 'b2bonlinerAerae'
-chunksize = 50000
+chunksize = 100000
+
+key_filenames = ['inner-nuance-389811-05efdb1df532.json', 'inner-nuance-389811-13fe8ddc7b28.json']
+credentials_list = [get_credentials(key_filename) for key_filename in key_filenames]
 
 def main(event, context):
     email = os.getenv('ONLINER_EMAIL')
@@ -43,8 +46,7 @@ def main(event, context):
         authenticate(session, password, email)
         download_file(session, url_onliner_file, data_file_path)
 
-        key_filenames = ['inner-nuance-389811-05efdb1df532.json', 'inner-nuance-389811-13fe8ddc7b28.json']
-        credentials_list = [get_credentials(key_filename) for key_filename in key_filenames]
+        
         
         file_objects, service_drive = create_and_move_files(filename, credentials_list[0], parent_folder_id, num_files)
         
