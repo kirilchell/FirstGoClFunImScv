@@ -276,7 +276,7 @@ def process_and_upload_files(local_file_path, chunksize, file_objects, service_d
                             { 
                                 "updateSheetProperties": { 
                                     "properties": { 
-                                        "sheetId": worksheet_id,
+                                       
                                         "title": "ready" 
                                     }, 
                                     "fields": "title" 
