@@ -311,7 +311,8 @@ def upload_to_gsheetsgapi(credentials, file_objects, service_drive, chunks, spre
             print("Appending data to spreadsheet...") 
             file = file_objects[i % len(file_objects)]  # выбираем соответствующий файл для чанка
             spreadsheet_id = spreadsheet.id  # get the spreadsheet ID from the spreadsheet object 
-            worksheet = spreadsheet.worksheet("transit") 
+            worksheet = spreadsheet.worksheet("transit")
+            #worksheet_name = worksheet.title 
             worksheet_id = worksheet.id  # get the worksheet ID from the worksheet object 
             append_datagapi(chunk, service_sheet, spreadsheet_id, worksheet_id, worksheet) 
             print("Data appended.") 
@@ -339,7 +340,7 @@ def append_datagapi(df, service_sheet, spreadsheet_id, worksheet_id, worksheet, 
             chunk_list = chunk_str.values.tolist()
             request = service_sheet.spreadsheets().values().append(
                 spreadsheetId=spreadsheet_id,
-                range=f"{worksheet}!A{last_row + 1}",  # Вставляем данные в первую пустую строку
+                range=f"transit!A{last_row + 1}",  # Вставляем данные в первую пустую строку
                 valueInputOption='RAW',
                 insertDataOption='INSERT_ROWS',
                 body={'values': chunk_list}
