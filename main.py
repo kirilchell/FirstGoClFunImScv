@@ -323,14 +323,14 @@ def upload_to_gsheetsgapi(credentials, file_objects, service_drive, chunks, spre
 
 def append_datagapi(df, service_sheet, spreadsheet_id, worksheet_id, worksheet,  chunk_size=50000):
     # Получаем текущее количество заполненных строк на листе
-    response = service_sheet.spreadsheets().values().get(
+    # response = service_sheet.spreadsheets().values().get(
         spreadsheetId=spreadsheet_id,
         range=worksheet_id,
         majorDimension='ROWS'
     ).execute()
     values = response.get('values', [])
-    last_row = len(values)
-
+    # last_row = len(values)
+    last_row = 0
     chunks = [df[i:i + chunk_size] for i in range(0, df.shape[0], chunk_size)]
 
     for i, chunk in enumerate(chunks):
