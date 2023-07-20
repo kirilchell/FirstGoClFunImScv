@@ -18,6 +18,7 @@ import datetime
 from googleapiclient.errors import HttpError
 import gc as garbage_collector
 import chardet
+import itertools
 
 num_files = 8
 # Set up logging
