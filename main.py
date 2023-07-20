@@ -19,7 +19,7 @@ from googleapiclient.errors import HttpError
 import gc as garbage_collector
 import chardet
 
-num_files = 4
+num_files = 8
 # Set up logging
 logging.basicConfig(level=logging.INFO)
 drive_disk = 'https://drive.google.com/drive/folders/1vTrm1w6YsGbMv4AVLr-GdYdGdbGHooCw'
