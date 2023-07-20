@@ -231,7 +231,6 @@ def process_and_upload_files(local_file_path, chunksize, file_objects, service_d
 
         logging.info("Beginning chunk processing...")
         
-        spreadsheet = process_last_modified_file(file_objects, service_drive)
 
         # Используем itertools.cycle для циклического перебора учетных данных
         credentials_cycle = itertools.cycle(credentials_list)
@@ -250,7 +249,7 @@ def process_and_upload_files(local_file_path, chunksize, file_objects, service_d
             chunk = chunk[header] 
             chunk = chunk.astype(str) 
 
-            #spreadsheet = process_last_modified_file(file_objects, service_drive)
+            spreadsheet = process_last_modified_file(file_objects, service_drive)
             # Используем next(credentials_cycle) для получения следующего набора учетных данных
             credentials = next(credentials_cycle)
             spreadsheet_id = upload_to_gsheetsgapi(credentials, file_objects, service_drive, [chunk], spreadsheet)
