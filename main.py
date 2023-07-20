@@ -313,7 +313,7 @@ def upload_to_gsheetsgapi(credentials, file_objects, service_drive, chunks, spre
             spreadsheet_id = spreadsheet.id  # get the spreadsheet ID from the spreadsheet object 
             worksheet = spreadsheet.worksheet("transit") 
             worksheet_id = worksheet.id  # get the worksheet ID from the worksheet object 
-            append_datagapi(chunk, service_sheet, spreadsheet_id, worksheet_id) 
+            append_datagapi(chunk, service_sheet, spreadsheet_id, worksheet_id, worksheet) 
             print("Data appended.") 
         except Exception as e: 
             logging.error(f"Error appending data to spreadsheet: {e}")  
@@ -321,7 +321,7 @@ def upload_to_gsheetsgapi(credentials, file_objects, service_drive, chunks, spre
     print("Done uploading files.") 
     return spreadsheet_id
 
-def append_datagapi(df, service_sheet, spreadsheet_id, worksheet_id, chunk_size=50000):
+def append_datagapi(df, service_sheet, spreadsheet_id, worksheet_id, worksheet,  chunk_size=50000):
     # Получаем текущее количество заполненных строк на листе
     response = service_sheet.spreadsheets().values().get(
         spreadsheetId=spreadsheet_id,
@@ -339,7 +339,7 @@ def append_datagapi(df, service_sheet, spreadsheet_id, worksheet_id, chunk_size=
             chunk_list = chunk_str.values.tolist()
             request = service_sheet.spreadsheets().values().append(
                 spreadsheetId=spreadsheet_id,
-                range=f"{worksheet_id}!A{last_row + 1}",  # Вставляем данные в первую пустую строку
+                range=f"{worksheet}!A{last_row + 1}",  # Вставляем данные в первую пустую строку
                 valueInputOption='RAW',
                 insertDataOption='INSERT_ROWS',
                 body={'values': chunk_list}
