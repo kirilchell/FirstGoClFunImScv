@@ -49,7 +49,7 @@ def main(event, context):
         
         file_objects, service_drive = create_and_move_files(filename, credentials_list[0], parent_folder_id, num_files)
         
-        process_and_upload_files(data_file_path, chunksize, file_objects, service_drive, credentials_list) # используется новая функция обработки и загрузки
+        upload_files(local_file_path, chunksize, file_objects, service_drive, credentials_list) # используется новая функция обработки и загрузки
 
         if os.path.isfile(data_file_path):
             os.remove(data_file_path)
