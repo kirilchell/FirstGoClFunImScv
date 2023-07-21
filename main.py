@@ -44,7 +44,7 @@ def main(event, context):
         authenticate(session, password, email)
         download_file(session, url_onliner_file, data_file_path)
 
-        key_filenames = ['inner-nuance-389811-05efdb1df532.json', 'inner-nuance-389811-13fe8ddc7b28.json', 'inner-nuance-389811-ba11f61d8d98.json']
+        key_filenames = ['inner-nuance-389811-05efdb1df532.json', 'inner-nuance-389811-13fe8ddc7b28.json', 'inner-nuance-389811-ba11f61d8d98.json', 'inner-nuance-389811-f8ca746ad03f.json']
         credentials_list = [get_credentials(key_filename) for key_filename in key_filenames]
         
         file_objects, service_drive = create_and_move_files(filename, credentials_list[0], parent_folder_id, num_files)
