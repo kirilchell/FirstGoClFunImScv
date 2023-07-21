@@ -221,16 +221,11 @@ def upload_files(local_file_path, chunksize, file_objects, service_drive, creden
 
         csv_file = local_file_path[:-3] 
 
-        header = None 
-        chunks = [] 
-
         logging.info("Reading and processing CSV file...") 
         encoding = detect_encoding(csv_file) 
         logging.info(f"Detected encoding: {encoding}")  # вывод кодировки в логи 
 
-        spreadsheet_ids = set()  # для хранения уникальных id таблиц
-
-        logging.info("Beginning chunk processing...")
+        
         
 
         # Используем itertools.cycle для циклического перебора учетных данных
@@ -238,30 +233,7 @@ def upload_files(local_file_path, chunksize, file_objects, service_drive, creden
 
         for chunk_id, chunk in enumerate(pd.read_csv(csv_file, encoding=encoding, sep=';', chunksize=chunksize, dtype=str)): 
             logging.info(f'Processing chunk number: {chunk_id}') 
-
-            if header is None: 
-                logging.info("Processing header...") 
-                header = chunk.columns.values[:8].tolist() + ['Инфо Магазин'] 
-                logging.info("Header processed.")
-
-            logging.info("Processing chunk data...") 
-            chunk['Инфо Магазин'] = chunk.iloc[:, 8:].apply(lambda row: '_'.join(row.dropna().astype(str)), axis=1) 
-            logging.info("Chunk data processed.")
-            chunk = chunk[header] 
-            chunk = chunk.astype(str) 
-
+          
             spreadsheet = process_last_modified_file(file_objects, service_drive)
             # Используем next(credentials_cycle) для получения следующего набора учетных данных
             credentials = next(credentials_cycle)
-            spreadsheet_id = upload_to_gsheetsgapi(credentials, file_objects, service_drive, [chunk], spreadsheet)
-            spreadsheet_ids.add(spreadsheet_id)
-            logging.info("Chunk uploaded.")
-
-        logging.info("Beginning renaming process...")
-
-        
-
-    finally: 
-        logging.info("Done processing and uploading files.")
-
-
