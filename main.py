@@ -322,7 +322,7 @@ def upload_to_gsheetsgapi(credentials, file_objects, service_drive, chunks, spre
     print("Done uploading files.") 
     return spreadsheet_id
 
-def append_datagapi(df, service_sheet, spreadsheet_id, worksheet_id, worksheet,  chunk_size=50000):
+def append_datagapi(df, service_sheet, spreadsheet_id, worksheet_id, worksheet,  chunk_size=40000):
     # Получаем текущее количество заполненных строк на листе
     # response = service_sheet.spreadsheets().values().get(
     #    spreadsheetId=spreadsheet_id,
