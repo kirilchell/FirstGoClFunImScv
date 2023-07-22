@@ -215,9 +215,9 @@ from google.cloud import storage
 from google.cloud import pubsub_v1
 
 # Эти параметры нужно задать в начале кода или взять из окружения
-BUCKET_NAME = 'your-bucket-name'
-PROJECT_ID = 'your-project-id'
-TOPIC_ID = 'your-topic-id'
+BUCKET_NAME = 'csv-chunk'
+PROJECT_ID = 'inner-nuance-389811'
+TOPIC_ID = 'topic-downl-importsheet'
 
 def upload_file_to_gcs(file_path, destination_blob_name):
     """Uploads a file to the bucket."""
